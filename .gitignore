@@ -1,0 +1,5 @@
+venboob/
+*.pyc
+*.pyo
+*.sh
+__pycache__
