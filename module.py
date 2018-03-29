@@ -23,7 +23,6 @@ from __future__ import unicode_literals
 from weboob.tools.backend import Module
 from weboob.capabilities.weather import CapWeather, CityNotFound
 from weboob.capabilities.base import find_object
-
 from .browser import AccuweatherBrowser
 
 
@@ -32,52 +31,20 @@ __all__ = ['AccuweatherModule']
 
 class AccuweatherModule(Module, CapWeather):
     NAME = 'accuweather'
-    DESCRIPTION = 'accuweather website'
+    DESCRIPTION = 'Get forecasts from the AccuWeather website'
     MAINTAINER = 'liyapo'
     EMAIL = 'liyapo@mail.ru'
     LICENSE = 'AGPLv3+'
     VERSION = '1.4'
     BROWSER = AccuweatherBrowser
 
+
+
     def get_current(self, city_id):
-        """
-        Get current weather.
-
-        :param city_id: ID of the city
-        :rtype: :class:`Current`
-        """
-	#raise NotImplementedError()
-	return self.browser.get_current(self.get_city(city_id))
-       
-
-    def iter_city_search(self, pattern):
-        """
-        Look for a city.
-
-        :param pattern: pattern to search
-        :type pattern: str
-        :rtype: iter[:class:`City`]
-        """
-        return self.browser.iter_city_search(pattern)
-        #raise NotImplementedError()
+        return self.browser.get_current(city_id)
 
     def iter_forecast(self, city_id):
-        """
-        Iter forecasts of a city.
+        return self.browser.iter_forecast(city_id)
 
-        :param city_id: ID of the city
-        :rtype: iter[:class:`Forecast`]
-        """
-        return self.browser.iter_forecast(self.get_city(city_id))
-        #raise NotImplementedError()
-
-    def get_city(self, _id):
-        cities = list(self.iter_city_search(_id))
- 
-        if len(cities) == 0:
-            raise CityNotFound()
- 
-        try:
-            return find_object(cities, id=_id, error=CityNotFound)
-        except CityNotFound:
-            return cities[0]
+    def iter_city_search(self, pattern):
+        return self.browser.iter_city_search(pattern)

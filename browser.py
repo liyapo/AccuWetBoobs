@@ -21,21 +21,26 @@ from __future__ import unicode_literals
 
 
 from weboob.browser import PagesBrowser, URL
+from .pages import WeatherPage, CitySearch
 
-from .pages import WeatherPage, SearchCitiesPage
-
+__all__ = ['AccuweatherBrowser']
 
 class AccuweatherBrowser(PagesBrowser):
-    BASEURL = 'http://www.meteofrance.com'
+    BASEURL = 'https://www.accuweather.com'
+    city_search = URL('https://api.accuweather.com/locations/v1/cities/autocomplete\?q=(?P<pattern>.*)&apikey=d41dfd5e8a1748d0970cba6637647d96&language=en-us&get_param=value', CitySearch)
 
-    cities = URL('mf3-rpc-portlet/rest/lieu/facet/previsions/search/(?P<pattern>.*)', SearchCitiesPage)
-    weather = URL('previsions-meteo-france/(?P<city_name>.*)/(?P<city_id>.*)', WeatherPage)
+
+   # weather_page = URL('http://www.accuweather.com/en/pays/city/id/daily-weather-forecast/(?P<city_id>.*)', WeatherPage)
+
+    weather_page = URL('en/pays/city/id/current-weather/(?P<city_id>.*)', WeatherPage)
 
     def iter_city_search(self, pattern):
-        return self.cities.go(pattern=pattern).iter_cities()
- 
-    def iter_forecast(self, city):
-        return self.weather.go(city_id=city.id, city_name=city.name).iter_forecast()
- 
-    def get_current(self, city):
-        return self.weather.go(city_id=city.id, city_name=city.name).get_current()
+        return self.city_search.go(pattern=pattern).iter_cities()
+
+    def iter_forecast(self, city_id):
+        return self.weather_page.go(city_id=city_id).iter_forecast()
+
+    def get_current(self, city_id):
+	return self.weather_page.go(city_id=city_id).get_current()
+
+
