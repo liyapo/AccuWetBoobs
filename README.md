@@ -1,1 +1,1 @@
-A module AccuWeather for WetBoobs app
+A module AccuWeather to access meteo on accuweather.com
