@@ -36,56 +36,73 @@ class CitySearch(JsonPage):
         class item(ItemElement):
             klass = City
 
-            #def condition(self):
-             #   return Dict('type')(self) == "VILLE_FRANCE"
 
             obj_id = Dict('Key')
             obj_name = Format(u'%s %s %s', Dict('LocalizedName'), Dict['AdministrativeArea']['ID'], Dict['Country']['LocalizedName'])
 
 
 class WeatherPage(HTMLPage):
+ 
     @method
     class iter_forecast(ListElement):
         item_xpath = '//*[@id="panel-main"]//div[@id="feed-tabs"]/ul/li'
 
         class item(ItemElement):
             klass = Forecast
-		
-	    obj_id = CleanText('./div/h4')
-            obj_date = CleanText('./div/h4')
-            '''def obj_date(self):
-                actual_day_number = Eval(int,
-                                         Regexp(CleanText('./dl/dt'),
+	
+	    #temp = CleanDecimal(CleanText('.//span[@class="small-temp"]'))
+	     	    
+
+	    obj_id = CleanText('./div/h3')
+            
+	    #obj_date =  Regexp(CleanText('./div/h4'), '(\w+)')
+	    def obj_date(self):
+                actual_day = Eval(int,
+                                         Regexp(CleanText('./div/h4'),
                                                 '\w{3} (\d+)'))(self)
-                base_date = date.today()
-                if base_date.day > actual_day_number:
-                    base_date = base_date.replace(
-                        month=(
-                            (base_date.month + 1) % 12
-                        )
-                    )
-                base_date = base_date.replace(day=actual_day_number)
-                return base_date'''
+                actual_month_str = Regexp(CleanText('./div/h4'),
+                                                '(\w+)')(self)
+		actual_month = 0
+	
+		base_date = date.today()
+		month_dict = {'JAN':1, 'FEB':2, 'MAR':3, 'APR':4, 'MAI':5, 'JUN':6, 'JUL':7, 'AUG':8, 'SEP':9, 'OCT':10, 'NOV':11, 'DEC':12}
+
+		for key, value in month_dict.items():
+		    if actual_month_str.lower() == key.lower():
+			actual_month = value
+
+               	   
+                base_date = base_date.replace(day=actual_day)
+                base_date = base_date.replace(month=actual_month)
+              
+
+                return base_date
 
 
 	    def obj_low(self):
-                temp = 4 #CleanDecimal('.//span[@class="small-temp"]')
-                         
-                #if temp != "-":  # Sometimes website does not return low
-                #    temp = CleanDecimal(temp)(self)
-                unit = u'C' #Regexp(CleanText('//*[@id="current-city-tab"]//span[@class="local-temp"]'), u'.*\xb0(\w)')(self)
-                return Temperature(float(temp), unit)
-               # return NotAvailable
+
+		try:
+	            temp = CleanDecimal(CleanText('.//span[@class="small-temp"]'))(self)
+                except:
+		    return NotAvailable
+         
+                unit = Regexp(CleanText('//*[@id="current-city-tab"]//span[@class="local-temp"]'), u'.*\xb0(\w)')(self)
+         	return Temperature(float(temp), unit)
+                
 
             def obj_high(self):
-                temp = 7 #CleanDecimal('.//span[@class="large-temp"]')(self)
-               # if temp != "-":  # Sometimes website does not return high
-               #     temp = CleanDecimal(temp)(self)
-                unit = u'C' #Regexp(CleanText('//*[@id="current-city-tab"]//span[@class="local-temp"]'), u'.*\xb0(\w)')(self)
+                
+		try:
+		   temp = CleanDecimal(CleanText('.//span[@class="large-temp"]'))(self)
+		except:
+		    return NotAvailable
+                
+		unit = Regexp(CleanText('//*[@id="current-city-tab"]//span[@class="local-temp"]'), u'.*\xb0(\w)')(self)
                 return Temperature(float(temp), unit)
-                #return NotAvailable
 
-            obj_text = CleanText('.//span[@class="cond"]')
+
+	    obj_text = CleanText('.//span[@class="cond"]')
+
 
     @method
     class get_current(ItemElement):
