@@ -25,6 +25,7 @@ from weboob.capabilities.base import NotAvailable
 from weboob.capabilities.weather import Forecast, Current, City, Temperature
 from weboob.browser.filters.json import Dict
 from weboob.browser.filters.standard import CleanText, CleanDecimal, Regexp, Format, Eval
+import lxml
 
 
 class CitySearch(JsonPage):
@@ -36,9 +37,10 @@ class CitySearch(JsonPage):
         class item(ItemElement):
             klass = City
 
-
             obj_id = Dict('Key')
             obj_name = Format(u'%s %s %s', Dict('LocalizedName'), Dict['AdministrativeArea']['ID'], Dict['Country']['LocalizedName'])
+
+
 
 
 class WeatherPage(HTMLPage):
@@ -48,14 +50,12 @@ class WeatherPage(HTMLPage):
         item_xpath = '//*[@id="panel-main"]//div[@id="feed-tabs"]/ul/li'
 
         class item(ItemElement):
-            klass = Forecast
-	
-	    #temp = CleanDecimal(CleanText('.//span[@class="small-temp"]'))
-	     	    
+            klass = Forecast    	    
 
 	    obj_id = CleanText('./div/h3')
-            
-	    #obj_date =  Regexp(CleanText('./div/h4'), '(\w+)')
+	    obj_text = CleanText('.//span[@class="cond"]')
+
+            	    
 	    def obj_date(self):
                 actual_day = Eval(int,
                                          Regexp(CleanText('./div/h4'),
@@ -70,38 +70,32 @@ class WeatherPage(HTMLPage):
 		for key, value in month_dict.items():
 		    if actual_month_str.lower() == key.lower():
 			actual_month = value
-
-               	   
+            	   
                 base_date = base_date.replace(day=actual_day)
                 base_date = base_date.replace(month=actual_month)
-              
-
                 return base_date
 
 
 	    def obj_low(self):
 
-		try:
-	            temp = CleanDecimal(CleanText('.//span[@class="small-temp"]'))(self)
-                except:
-		    return NotAvailable
-         
-                unit = Regexp(CleanText('//*[@id="current-city-tab"]//span[@class="local-temp"]'), u'.*\xb0(\w)')(self)
-         	return Temperature(float(temp), unit)
+	        low_temp = CleanText('.//span[@class="small-temp"]')(self)
+                if low_temp:
+		    temp = CleanDecimal('.//span[@class="small-temp"]')(self)
+                    unit = Regexp(CleanText('//*[@id="current-city-tab"]//span[@class="local-temp"]'), u'.*\xb0(\w)')(self)
+         	    return Temperature(float(temp), unit)
+		return NotAvailable
                 
 
             def obj_high(self):
                 
-		try:
-		   temp = CleanDecimal(CleanText('.//span[@class="large-temp"]'))(self)
-		except:
-		    return NotAvailable
-                
-		unit = Regexp(CleanText('//*[@id="current-city-tab"]//span[@class="local-temp"]'), u'.*\xb0(\w)')(self)
-                return Temperature(float(temp), unit)
+         	high_temp = CleanText('.//span[@class="large-temp"]')(self)
+		if high_temp:
+		    temp = CleanDecimal('.//span[@class="large-temp"]')(self)
+                    unit = Regexp(CleanText('//*[@id="current-city-tab"]//span[@class="local-temp"]'), u'.*\xb0(\w)')(self)
+                    return Temperature(float(temp), unit)
+		return NotAvailable
 
-
-	    obj_text = CleanText('.//span[@class="cond"]')
+	   
 
 
     @method
@@ -115,19 +109,17 @@ class WeatherPage(HTMLPage):
 	description = CleanText('//*[@id="detail-now"]//span[@class="cond"]')
 	wind_cond = CleanText('//*[@id="detail-now"]//li[@class="wind"]')
 	humidity = CleanText('//*[@id="detail-now"]//ul[@class="stats"]/li[3]')
-	
-                             
+                           
 	obj_text = Format(u'Real feel: %s \xb0%s - %s - %s - %s',  
-
            		real_feel_temp,
 			temp_units,
 			description, 
 			wind_cond, 
 			humidity)
 
+
         def obj_temp(self):
             temp = CleanDecimal('//*[@id="current-city-tab"]//span[@class="local-temp"]')(self)
             unit = Regexp(CleanText('//*[@id="current-city-tab"]//span[@class="local-temp"]'), u'.*\xb0(\w)')(self) 
             return Temperature(float(temp), unit)
-
 
