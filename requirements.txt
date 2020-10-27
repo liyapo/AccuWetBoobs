@@ -2,7 +2,7 @@ adium-theme-ubuntu==0.3.4
 beautifulsoup4==4.4.1
 chardet==2.3.0
 crypto==1.4.1
-cryptography==1.2.3
+cryptography==3.2
 cssselect==0.9.1
 enum34==1.1.2
 feedparser==5.1.3
